@@ -1,6 +1,7 @@
 #!/usr/bin/python
 ''' Portland Maine Police Log download script '''
 
+# TODO: Directory Management and error handling
 
 import os
 from os.path import exists
@@ -100,12 +101,13 @@ def write_pdf_and_csv(meta_data, data, media_log=True):
 
     # subtract 1 day
     date_str =  meta_data['pdf_date'].strftime("%Y-%m-%d")
+    year_str =  meta_data['pdf_date'].strftime("%Y")
     if media_log:
-        pdf_new_filename = f"{FILE_LOCATION}/Media Logs/{date_str}.pdf"
-        csv_filename = f"{FILE_LOCATION}/Media Logs/csv/{date_str}.csv"
+        pdf_new_filename = f"{FILE_LOCATION}/Media Logs/{year_str}/{date_str}.pdf"
+        csv_filename = f"{FILE_LOCATION}/Media Logs/csv/{year_str}/{date_str}.csv"
     else:
-        pdf_new_filename = f"{FILE_LOCATION}/Arrest Logs/arrestlog_{date_str}.pdf"
-        csv_filename = f"{FILE_LOCATION}/Arrest Logs/csv/arrestlog_{date_str}.csv"
+        pdf_new_filename = f"{FILE_LOCATION}/Arrest Logs/{year_str}/arrestlog_{date_str}.pdf"
+        csv_filename = f"{FILE_LOCATION}/Arrest Logs/csv/{year_str}/arrestlog_{date_str}.csv"
 
     if not exists(pdf_new_filename):
 
