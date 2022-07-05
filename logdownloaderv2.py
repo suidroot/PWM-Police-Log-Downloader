@@ -24,7 +24,8 @@ ARREST_LOG_URL = "https://www.portlandmaine.gov/471/Crime-in-Portland"
 FILE_LOCATION = f"{HOME_DIR}/SynologyDrive/Drive/Documents/Police Logs"
 DEBUG = False
 LOAD_TIME_SLEEP = 10
-CSV_HEADER = ['PD Call#', 'Call Start \nDate & Time', 'Call End \nDate & Time', 'Type of Call', 'Street Address / Location', 'Officer Name']
+MEDIA_CSV_HEADER = ['PD Call#', 'Call Start \nDate & Time', 'Call End \nDate & Time', 'Type of Call', 'Street Address / Location', 'Officer Name']
+ARREST_CSV_HEADER = [ 'Date', 'Arrestee Name', 'Age', 'Home City', 'Charge', 'Arrest Type', 'Officer Name', 'Violation Location' ]
 
 
 def create_firefox_object(headless=True):
@@ -99,7 +100,7 @@ def get_pdf_meta_data(data):
 
     return meta_data
 
-def pdf_table_extractor(pdf_filename):
+def pdf_table_extractor(pdf_filename, media_log=True):
     ''' Extract Table data from PDF data '''
 
     pdf_data = pdfplumber.open(pdf_filename)
@@ -113,18 +114,30 @@ def pdf_table_extractor(pdf_filename):
     if call_list[-1][0] == "Total calls:":
         total_calls = call_list[-1][1] 
         del(call_list[-1])
+    elif media_log == False:
+        try:
+            total_calls = int(call_list[-1][0])
+            del(call_list[-1])
+        except ValueError:
+            print("Could not get total calls")
+            total_calls = 0
     else:
         print("Could not get total calls")
         total_calls = 0
 
     return call_list, int(total_calls)
 
-def write_csv_file(csv_list, csv_file):
+def write_csv_file(csv_list, csv_file, media_log=True):
     ''' Write list to CSV file '''
+
+    if media_log:
+        csv_header = MEDIA_CSV_HEADER
+    else:
+        csv_header = ARREST_CSV_HEADER
 
     with open(csv_file, 'w') as f:
         write = csv.writer(f)
-        write.writerow(CSV_HEADER)
+        write.writerow(csv_header)
         write.writerows(csv_list)
 
 
@@ -161,10 +174,10 @@ def write_pdf_and_csv(meta_data, data, media_log=True):
             print(f"creating csv of {date_str} to {csv_filename} ")
         else:
             print(" (csv)")
-        call_list, number_calls = pdf_table_extractor(pdf_new_filename)
+        call_list, number_calls = pdf_table_extractor(pdf_new_filename, media_log=media_log)
         if len(call_list) != number_calls:
             print(f"PDF Table Parsing Error: Call number mismatch {len(call_list)} != {number_calls}")
-        write_csv_file(call_list, csv_filename)
+        write_csv_file(call_list, csv_filename, media_log=media_log)
         # tabula.convert_into(pdf_new_filename, csv_filename, pages='all')
     else:
         if DEBUG:
