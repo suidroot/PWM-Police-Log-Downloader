@@ -9,7 +9,9 @@ from tempfile import TemporaryFile
 from time import sleep
 from datetime import datetime, timedelta
 import requests
-import tabula   # tabula-py
+#import tabula   # tabula-py
+import pdfplumber
+import csv
 from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -22,6 +24,7 @@ ARREST_LOG_URL = "https://www.portlandmaine.gov/471/Crime-in-Portland"
 FILE_LOCATION = f"{HOME_DIR}/SynologyDrive/Drive/Documents/Police Logs"
 DEBUG = False
 LOAD_TIME_SLEEP = 10
+CSV_HEADER = ['PD Call#', 'Call Start \nDate & Time', 'Call End \nDate & Time', 'Type of Call', 'Street Address / Location', 'Officer Name']
 
 
 def create_firefox_object(headless=True):
@@ -96,6 +99,35 @@ def get_pdf_meta_data(data):
 
     return meta_data
 
+def pdf_table_extractor(pdf_filename):
+    ''' Extract Table data from PDF data '''
+
+    pdf_data = pdfplumber.open(pdf_filename)
+    call_list = []
+    for pdf_page in pdf_data.pages:
+        calls = pdf_page.extract_table()
+        del(calls[0])           # remove page header
+        call_list.extend(calls)
+
+    # extract Total calls from PDf if unable to find print error
+    if call_list[-1][0] == "Total calls:":
+        total_calls = call_list[-1][1] 
+        del(call_list[-1])
+    else:
+        print("Could not get total calls")
+        total_calls = 0
+
+    return call_list, int(total_calls)
+
+def write_csv_file(csv_list, csv_file):
+    ''' Write list to CSV file '''
+
+    with open(csv_file, 'w') as f:
+        write = csv.writer(f)
+        write.writerow(CSV_HEADER)
+        write.writerows(csv_list)
+
+
 def write_pdf_and_csv(meta_data, data, media_log=True):
     ''' Write the PDF file and CVS version of the files to disk '''
 
@@ -129,7 +161,11 @@ def write_pdf_and_csv(meta_data, data, media_log=True):
             print(f"creating csv of {date_str} to {csv_filename} ")
         else:
             print(" (csv)")
-        tabula.convert_into(pdf_new_filename, csv_filename, pages='all')
+        call_list, number_calls = pdf_table_extractor(pdf_new_filename)
+        if len(call_list) != number_calls:
+            print(f"PDF Table Parsing Error: Call number mismatch {len(call_list)} != {number_calls}")
+        write_csv_file(call_list, csv_filename)
+        # tabula.convert_into(pdf_new_filename, csv_filename, pages='all')
     else:
         if DEBUG:
             print(f"Skipping csv of {date_str} to {csv_filename} ")
@@ -145,13 +181,15 @@ def main():
 
     for day in DAYS_OF_WEEK:
         if DEBUG:
-            print(f"Downloading {day} : {url_data[day]} ", end='')
+            print(f"Downloading {day} : {url_data[day]} -", end='')
         else:
-            print(f"Downloading {day} : ", end='')
+            print(f"Downloading {day} -", end='')
         status_code, content = download_content(url_data[day])
 
         if status_code == 200:
             meta_data = get_pdf_meta_data(content)
+            date = meta_data['pdf_date'].strftime("%Y-%m-%d")
+            print(f' {date} ', end='')
             write_pdf_and_csv(meta_data, content)
         else:
             print(f"**** {day} file not found on server: {status_code} error ***")
