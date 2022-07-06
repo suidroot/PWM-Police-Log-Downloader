@@ -2,11 +2,11 @@ from subprocess import call
 import os
 from logdownloaderv2 import pdf_table_extractor, write_csv_file
 
-YEAR = '2022'
+YEAR = '2021'
 HOME_DIR = os.environ['HOME']
 FILE_LOCATION = f"{HOME_DIR}/SynologyDrive/Drive/Documents/Police Logs"
 DEBUG = False
-MEDIA_LOG=False
+MEDIA_LOG=True
 
 if MEDIA_LOG:
     base_file_path = f"{FILE_LOCATION}/Media Logs"

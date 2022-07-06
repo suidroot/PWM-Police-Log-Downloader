@@ -114,6 +114,9 @@ def pdf_table_extractor(pdf_filename, media_log=True):
     if call_list[-1][0] == "Total calls:":
         total_calls = call_list[-1][1] 
         del(call_list[-1])
+    elif "Total Calls For PD Service Reported:" in call_list[-1][0]:
+        total_calls = call_list[-1][0].split(":")[1].lstrip(" ")
+        del(call_list[-1])
     elif media_log == False:
         try:
             total_calls = int(call_list[-1][0])
