@@ -4,6 +4,25 @@ This is a tool to download the Police Daily Media Log and Weekly Arrest logs fro
 
 This project requires [Gecko Driver](https://github.com/mozilla/geckodriver) to be installed.
 
+Configuration options for where to store the downloaded files is located in the `config.py` file.
+
+The following directory structure is required to be created ahead of downloads
+```
+[FILE_LOCATION]/Media Logs/[YEAR]/
+[FILE_LOCATION]/Media Logs/csv/[YEAR]/
+[FILE_LOCATION]/Arrest Logs/[YEAR]/
+[FILE_LOCATION]/Arrest Logs/csv/[YEAR]/
+```
+
+## Docker Container
+There is a docker container for this script below is example usage
+
+```
+docker run --rm \
+-v /a-path/PWM-Police-Log-Downloader/test:/output \
+usertag/pwmpolicelogdownloader
+```
+
 ## Approach
 The city website dynamically loads the content through javascript, the was a challenge for standard CLI utilities such as curl and wget. The main challenge was to find the URLs for the current day of the week which change on each update by the city. The work flow of this script is as follows:
 
