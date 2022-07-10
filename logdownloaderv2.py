@@ -3,7 +3,7 @@
 
 # TODO: Directory Management and error handling
 
-import os
+# import os
 from os.path import exists
 from tempfile import TemporaryFile
 from time import sleep
