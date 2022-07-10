@@ -16,17 +16,17 @@ from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+import config
 
 DAYS_OF_WEEK = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" ]
-HOME_DIR = os.environ['HOME']
-MEDIA_LOG_URL = "https://www.portlandmaine.gov/472/Daily-Media-Logs"
-ARREST_LOG_URL = "https://www.portlandmaine.gov/471/Crime-in-Portland"
-FILE_LOCATION = f"{HOME_DIR}/SynologyDrive/Drive/Documents/Police Logs"
-DEBUG = False
-LOAD_TIME_SLEEP = 10
 MEDIA_CSV_HEADER = ['PD Call#', 'Call Start \nDate & Time', 'Call End \nDate & Time', 'Type of Call', 'Street Address / Location', 'Officer Name']
 ARREST_CSV_HEADER = [ 'Date', 'Arrestee Name', 'Age', 'Home City', 'Charge', 'Arrest Type', 'Officer Name', 'Violation Location' ]
 
+MEDIA_LOG_URL = config.MEDIA_LOG_URL
+ARREST_LOG_URL = config.ARREST_LOG_URL
+DEBUG = config.DEBUG
+LOAD_TIME_SLEEP = config.LOAD_TIME_SLEEP
+FILE_LOCATION = config.FILE_LOCATION
 
 def create_firefox_object(headless=True):
     ''' Create Firefox Object with option to disable headless mode '''
