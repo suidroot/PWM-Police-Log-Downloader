@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 ''' Portland Maine Police Log download script '''
 
 # TODO: Directory Management and error handling
