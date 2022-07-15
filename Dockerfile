@@ -1,10 +1,10 @@
-FROM ubuntu
+FROM ubuntu:focal
 
 ENV TZ UTC
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update
 RUN apt-get upgrade -y
-RUN apt-get install -y python python3-pip git curl firefox firefox-geckodriver
+RUN apt-get install -y python3 python3-pip git curl firefox firefox-geckodriver
 
 RUN mkdir /opt/PWM-Police-Log-Downloader
 RUN mkdir /output
