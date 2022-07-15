@@ -15,7 +15,10 @@ The following directory structure is required to be created ahead of downloads
 ```
 
 ## Docker Container
-There is a docker container for this script below is example usage
+There is a docker container for this script below is example usage.
+
+Notes:
+* This container has issues when using ubuntu versions newer then focal
 
 ```
 docker run --rm \
