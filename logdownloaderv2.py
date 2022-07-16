@@ -49,12 +49,12 @@ def setup_logger():
         discord_handler = DiscordHandler(
             config.DISCORD_NAME,
             config.DISCORD_WEBHOOK_URL )
-        discord_format = logging.Formatter(config.LOGGER_DISCORD)
+        discord_format = logging.Formatter(config.LOGGER_DISCORD_FORMAT)
         discord_handler.setFormatter(discord_format)
         logger.addHandler(discord_handler)
 
     stream_handler = logging.StreamHandler()
-    stream_format = logging.Formatter(config.LOGGER_STREAM)
+    stream_format = logging.Formatter(config.LOGGER_STREAM_FORMAT)
     stream_handler.setFormatter(stream_format)
 
     # Add the handlers to the Logger

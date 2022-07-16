@@ -14,7 +14,7 @@ else:
     FILE_LOCATION = f"{HOME_DIR}/SynologyDrive/Drive/Documents/Police Logs"
 
 LOAD_TIME_SLEEP = 10
-LOGGER_STREAM = '%(asctime)s - %(levelname)s - %(message)s'
+LOGGER_STREAM_FORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 
 if 'LOG_LEVEL' in environ:
     if environ['LOG_LEVEL'] == 'INFO':
@@ -40,5 +40,5 @@ else:
 if ENABLE_DISCORD:
     # set DISCORD_PWM_WEBHOOK_URL shell environment var for webhook URL
     DISCORD_WEBHOOK_URL = environ['DISCORD_PWM_WEBHOOK_URL']
-    LOGGER_DISCORD = '%(message)s'
+    LOGGER_DISCORD_FORMAT = '%(message)s'
     DISCORD_NAME = "Logdl_bot"
