@@ -1,9 +1,10 @@
 #!/usr/bin/python3
 ''' Portland Maine Police Log download script '''
 
-# TODO: Directory Management and error handling
+# TODO: Directory Management, Create missing directories
 
 from os.path import exists
+from sys import exit
 from tempfile import TemporaryFile
 from time import sleep
 from datetime import datetime, timedelta
@@ -15,6 +16,7 @@ from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.common.exceptions import NoSuchElementException
 import config
 
 if config.ENABLE_DISCORD:
@@ -28,15 +30,19 @@ MEDIA_CSV_HEADER = ['PD Call#', 'Call Start \nDate & Time', \
     'Officer Name']
 ARREST_CSV_HEADER = [ 'Date', 'Arrestee Name', 'Age', 'Home City', 'Charge', \
     'Arrest Type', 'Officer Name', 'Violation Location' ]
-
-MEDIA_LOG_URL = config.MEDIA_LOG_URL
-ARREST_LOG_URL = config.ARREST_LOG_URL
-DEBUG = config.DEBUG
-LOAD_TIME_SLEEP = config.LOAD_TIME_SLEEP
-FILE_LOCATION = config.FILE_LOCATION
+FILE_LOCATION = config.FILE_LOCATION    # Keeping for readability
 
 def setup_logger():
-    ''' Set up logging subsystem '''
+    '''
+    Set up logging subsystem
+    Logging Schema
+    FATAL: Program should quit sending error
+    ERROR: Non-fatal error can continue operating
+    WARNING: Normal Status updates positive activities occurred
+    INFO: Verbose normal Status updates all activities occurred
+    DEBUG: Full operation debugging including supported libraries
+    '''
+
     logger = logging.getLogger()
 
     if config.ENABLE_DISCORD:
@@ -69,36 +75,49 @@ def create_firefox_object(headless=True):
 
     return driver
 
-def get_arrest_log_url(headless=True):
-    ''' Search for the URL of the Arrest Logs in webpage '''
+def get_log_urls(url, link_text, headless=True):
+    '''
+    Collect URL(s) based on provided text
+    If the link_text is a list it will search for more then one URL in the page if str
+    it will only look for one link
 
-    driver = create_firefox_object(headless)
-    driver.get(ARREST_LOG_URL)
-    sleep(LOAD_TIME_SLEEP)
+    param url (str): URL to download webpage content
+    param link_text (list or str): Single mode: provide string,
+        multiple mode provide list of Strings
 
-    link_element = driver.find_element(By.LINK_TEXT, "View Weekly Arrest Log")
-    url_data = link_element.get_attribute('href')
-    driver.quit()
+    return (str or list): will return list or URLs or single string depending on mode
+    '''
 
-    return url_data
+    driver = create_firefox_object(headless=headless)
+    driver.get(url)
+    sleep(config.LOAD_TIME_SLEEP)
 
-def get_media_log_urls(days):
-    ''' Iterate over list of days of the week to find the URLs of the daily media logs'''
-    url_data = {}
-
-    driver = create_firefox_object()
-    driver.get(MEDIA_LOG_URL)
-    sleep(LOAD_TIME_SLEEP)
-
-    for day in days:
+    if isinstance(link_text, str):
         try:
-            link_element = driver.find_element(By.LINK_TEXT, day)
-            day_url = link_element.get_attribute('href')
-            url_data[day] = day_url
-        except Exception as exception_info:
-            logger.error("The error raised is: %s", exception_info)
+            link_element = driver.find_element(By.LINK_TEXT, link_text)
+        except NoSuchElementException as except_data:
+            logging.fatal(" %s ", except_data)
+            driver.quit()
+            exit()
 
-        logger.debug("%s: %s", day, day_url)
+        url_data = link_element.get_attribute('href')
+
+    elif isinstance(link_text, list):
+        url_data = {}
+
+        for day in link_text:
+            try:
+                link_element = driver.find_element(By.LINK_TEXT, day)
+                day_url = link_element.get_attribute('href')
+                url_data[day] = day_url
+            except NoSuchElementException as except_data:
+                logger.error(" %s ", except_data)
+
+            logger.debug("%s: %s", day, day_url)
+    else:
+        logger.fatal("Invalid link_text data not str or list")
+        driver.quit()
+        exit()
 
     driver.quit()
 
@@ -131,6 +150,7 @@ def pdf_table_extractor(pdf_filename, media_log=True):
 
     pdf_data = pdfplumber.open(pdf_filename)
     call_list = []
+
     for pdf_page in pdf_data.pages:
         calls = pdf_page.extract_table()
         del calls[0]            # remove page header
@@ -175,6 +195,7 @@ def write_pdf_and_csv(meta_data, data, media_log=True):
     # subtract 1 day
     date_str =  meta_data['pdf_date'].strftime("%Y-%m-%d")
     year_str =  meta_data['pdf_date'].strftime("%Y")
+
     if media_log:
         pdf_new_filename = f"{FILE_LOCATION}/Media Logs/{year_str}/{date_str}.pdf"
         csv_filename = f"{FILE_LOCATION}/Media Logs/csv/{year_str}/{date_str}.csv"
@@ -204,30 +225,34 @@ def write_pdf_and_csv(meta_data, data, media_log=True):
 def main():
     ''' Main function '''
 
-    logger.warning("Getting Media Log URLs")
-    url_data = get_media_log_urls(DAYS_OF_WEEK)
+    logger.warning("Starting Media Log Download")
+    logger.info("Getting Media Log URLs")
+    url_data = get_log_urls(config.MEDIA_LOG_URL, DAYS_OF_WEEK)
 
     for day in DAYS_OF_WEEK:
-        logger.info("Downloading %s", day)
-        logger.debug("Downloading %s : %s", day, url_data[day])
+        logger.info("Start Downloading %s", day)
+        logger.debug("Start Downloading %s : %s", day, url_data[day])
         status_code, content = download_content(url_data[day])
 
         if status_code == 200:
             meta_data = get_pdf_meta_data(content)
             date = meta_data['pdf_date'].strftime("%Y-%m-%d")
-            logger.debug('PDF date: %s', date)
+            logger.debug('Found PDF date: %s', date)
             write_pdf_and_csv(meta_data, content)
         else:
             logger.error("**** %s file not found on server: %s error ***", day, status_code)
 
-    logger.warning("Starting Arrest Log")
-    status_code, content = download_content(get_arrest_log_url())
+    logger.warning("Starting Arrest Log Download")
+    status_code, content = download_content(get_log_urls(config.ARREST_LOG_URL, \
+        "View Weekly Arrest Log"))
 
     if status_code == 200:
         meta_data = get_pdf_meta_data(content)
         write_pdf_and_csv(meta_data, content, media_log=False)
     else:
         logger.error("%s file not found", day)
+
+    logger.warning("Completed Log Downloads")
 
 if __name__ == '__main__':
     logger = setup_logger()

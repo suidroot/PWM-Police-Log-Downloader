@@ -6,7 +6,6 @@ import logging
 
 MEDIA_LOG_URL = "https://www.portlandmaine.gov/472/Daily-Media-Logs"
 ARREST_LOG_URL = "https://www.portlandmaine.gov/471/Crime-in-Portland"
-# Support for Docker
 
 if 'FILE_LOCATION' in environ:
     FILE_LOCATION =  environ['FILE_LOCATION']
@@ -14,7 +13,6 @@ else:
     HOME_DIR = environ['HOME']
     FILE_LOCATION = f"{HOME_DIR}/SynologyDrive/Drive/Documents/Police Logs"
 
-DEBUG = False
 LOAD_TIME_SLEEP = 10
 LOGGER_STREAM = '%(asctime)s - %(levelname)s - %(message)s'
 
@@ -34,8 +32,13 @@ else:
     LOGGING_LEVEL = logging.WARNING
 
 # Discord Logging
-ENABLE_DISCORD = True
-# set DISCORD_PWM_WEBHOOK_URL shell environment var for webhook URL
-DISCORD_WEBHOOK_URL = environ['DISCORD_PWM_WEBHOOK_URL']
-LOGGER_DISCORD = '%(message)s'
-DISCORD_NAME = "Logdl_bot"
+if 'ENABLE_DISCORD' in environ:
+    ENABLE_DISCORD = environ['ENABLE_DISCORD']
+else:
+    ENABLE_DISCORD = True
+
+if ENABLE_DISCORD:
+    # set DISCORD_PWM_WEBHOOK_URL shell environment var for webhook URL
+    DISCORD_WEBHOOK_URL = environ['DISCORD_PWM_WEBHOOK_URL']
+    LOGGER_DISCORD = '%(message)s'
+    DISCORD_NAME = "Logdl_bot"
