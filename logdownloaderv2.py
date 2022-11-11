@@ -139,8 +139,9 @@ def get_pdf_meta_data(data):
 
     reader = PdfReader(temp_file_pointer)
     # "D:20220621061003-04'00'"
-    pdf_date = reader.getDocumentInfo()['/CreationDate']
-    meta_data['pdf_date'] = datetime.strptime(pdf_date, "D:%Y%m%d%H%M%S-04'00'") - timedelta(1)
+    # this removes the TZ data on the end
+    pdf_date = reader.getDocumentInfo()['/CreationDate'].split('-')[0]
+    meta_data['pdf_date'] = datetime.strptime(pdf_date, "D:%Y%m%d%H%M%S") - timedelta(1)
     temp_file_pointer.close()
 
     return meta_data
