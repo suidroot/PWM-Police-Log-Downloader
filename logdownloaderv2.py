@@ -126,7 +126,7 @@ def get_log_urls(url, link_text, headless=True):
 def download_content(url):
     ''' Download PDF Data '''
 
-    response = requests.get(url)
+    response = requests.get(url, verify=False)
     return response.status_code, response.content
 
 def get_pdf_meta_data(data):
