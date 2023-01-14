@@ -1,0 +1,21 @@
+CREATE TABLE call_types (
+	display_text TEXT NOT NULL,
+	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
+);
+
+CREATE TABLE officers (
+	firstname TEXT NOT NULL,
+	lastname TEXT NOT NULL,
+	display_text TEXT NOT NULL,
+	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
+);
+
+CREATE TABLE pwm_police_calls (
+	ID INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	call_number INTEGER NOT NULL,
+	call_start TEXT NOT NULL,
+	call_stop TEXT NOT NULL,
+	officer INTEGER NOT NULL,
+	call_type INTEGER NOT NULL,
+	call_address TEXT NOT NULL
+);
