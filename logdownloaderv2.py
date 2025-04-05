@@ -1,9 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 ''' Portland Maine Police Log download script '''
 
 # TODO: Directory Management, Create missing directories
 
 from os.path import exists
+from os import makedirs
 from sys import exit
 from tempfile import TemporaryFile
 from time import sleep
@@ -18,10 +19,13 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.common.exceptions import NoSuchElementException
 import config
+from uploader import upload_data
+from mylogger import setup_logger
 
-if config.ENABLE_DISCORD:
-    # https://pypi.org/project/python-logging-discord-handler/
-    from discord_logging.handler import DiscordHandler
+
+# if config.ENABLE_DISCORD:
+#     # https://pypi.org/project/python-logging-discord-handler/
+#     from discord_logging.handler import DiscordHandler
 
 DAYS_OF_WEEK = [ "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", \
     "Saturday", "Sunday" ]
@@ -32,36 +36,36 @@ ARREST_CSV_HEADER = [ 'Date', 'Arrestee Name', 'Age', 'Home City', 'Charge', \
     'Arrest Type', 'Officer Name', 'Violation Location' ]
 FILE_LOCATION = config.FILE_LOCATION    # Keeping for readability
 
-def setup_logger():
-    '''
-    Set up logging subsystem
-    Logging Schema
-    FATAL: Program should quit sending error
-    ERROR: Non-fatal error can continue operating
-    WARNING: Normal Status updates positive activities occurred
-    INFO: Verbose normal Status updates all activities occurred
-    DEBUG: Full operation debugging including supported libraries
-    '''
+# def setup_logger():
+#     '''
+#     Set up logging subsystem
+#     Logging Schema
+#     FATAL: Program should quit sending error
+#     ERROR: Non-fatal error can continue operating
+#     WARNING: Normal Status updates positive activities occurred
+#     INFO: Verbose normal Status updates all activities occurred
+#     DEBUG: Full operation debugging including supported libraries
+#     '''
 
-    logger = logging.getLogger()
+#     logger = logging.getLogger()
 
-    if config.ENABLE_DISCORD:
-        discord_handler = DiscordHandler(
-            config.DISCORD_NAME,
-            config.DISCORD_WEBHOOK_URL )
-        discord_format = logging.Formatter(config.LOGGER_DISCORD_FORMAT)
-        discord_handler.setFormatter(discord_format)
-        logger.addHandler(discord_handler)
+#     if config.ENABLE_DISCORD:
+#         discord_handler = DiscordHandler(
+#             config.DISCORD_NAME,
+#             config.DISCORD_WEBHOOK_URL )
+#         discord_format = logging.Formatter(config.LOGGER_DISCORD_FORMAT)
+#         discord_handler.setFormatter(discord_format)
+#         logger.addHandler(discord_handler)
 
-    stream_handler = logging.StreamHandler()
-    stream_format = logging.Formatter(config.LOGGER_STREAM_FORMAT)
-    stream_handler.setFormatter(stream_format)
+#     stream_handler = logging.StreamHandler()
+#     stream_format = logging.Formatter(config.LOGGER_STREAM_FORMAT)
+#     stream_handler.setFormatter(stream_format)
 
-    # Add the handlers to the Logger
-    logger.addHandler(stream_handler)
-    logger.setLevel(config.LOGGING_LEVEL)
+#     # Add the handlers to the Logger
+#     logger.addHandler(stream_handler)
+#     logger.setLevel(config.LOGGING_LEVEL)
 
-    return logger
+#     return logger
 
 def create_firefox_object(headless=True):
     ''' Create Firefox Object with option to disable headless mode '''
@@ -146,7 +150,7 @@ def get_pdf_meta_data(data):
 
     return meta_data
 
-def pdf_table_extractor(pdf_filename, media_log=True):
+def pdf_table_extractor(pdf_filename, dispatch_log=True):
     ''' Extract Table data from PDF data '''
 
     pdf_data = pdfplumber.open(pdf_filename)
@@ -164,7 +168,7 @@ def pdf_table_extractor(pdf_filename, media_log=True):
     elif "Total Calls For PD Service Reported:" in call_list[-1][0]:
         total_calls = call_list[-1][0].split(":")[1].lstrip(" ")
         del call_list[-1]
-    elif not media_log:
+    elif not dispatch_log:
         try:
             total_calls = int(call_list[-1][0])
             del call_list[-1]
@@ -177,10 +181,10 @@ def pdf_table_extractor(pdf_filename, media_log=True):
 
     return call_list, int(total_calls)
 
-def write_csv_file(csv_list, csv_file, media_log=True):
+def write_csv_file(csv_list, csv_file, dispatch_log=True):
     ''' Write list to CSV file '''
 
-    if media_log:
+    if dispatch_log:
         csv_header = MEDIA_CSV_HEADER
     else:
         csv_header = ARREST_CSV_HEADER
@@ -190,18 +194,28 @@ def write_csv_file(csv_list, csv_file, media_log=True):
         write.writerow(csv_header)
         write.writerows(csv_list)
 
-def write_pdf_and_csv(meta_data, data, media_log=True):
+def dir_exist_check(path_str):
+
+    if not exists(path_str):
+        makedirs(path_str)
+
+
+def write_pdf_and_csv(meta_data, data, dispatch_log=True):
     ''' Write the PDF file and CVS version of the files to disk '''
 
     # subtract 1 day
     date_str =  meta_data['pdf_date'].strftime("%Y-%m-%d")
     year_str =  meta_data['pdf_date'].strftime("%Y")
 
-    if media_log:
+    if dispatch_log:
+        dir_exist_check(f"{FILE_LOCATION}/Media Logs/{year_str}")
         pdf_new_filename = f"{FILE_LOCATION}/Media Logs/{year_str}/{date_str}.pdf"
+        dir_exist_check(f"{FILE_LOCATION}/Media Logs/csv/{year_str}")
         csv_filename = f"{FILE_LOCATION}/Media Logs/csv/{year_str}/{date_str}.csv"
     else:
+        dir_exist_check(f"{FILE_LOCATION}/Arrest Logs/{year_str}")
         pdf_new_filename = f"{FILE_LOCATION}/Arrest Logs/{year_str}/arrestlog_{date_str}.pdf"
+        dir_exist_check(f"{FILE_LOCATION}/Arrest Logs/csv/{year_str}")
         csv_filename = f"{FILE_LOCATION}/Arrest Logs/csv/{year_str}/arrestlog_{date_str}.csv"
 
     if not exists(pdf_new_filename):
@@ -215,13 +229,15 @@ def write_pdf_and_csv(meta_data, data, media_log=True):
     if not exists(csv_filename):
         logger.warning("Creating csv of %s to %s", date_str, csv_filename)
 
-        call_list, number_calls = pdf_table_extractor(pdf_new_filename, media_log=media_log)
+        call_list, number_calls = pdf_table_extractor(pdf_new_filename, dispatch_log=dispatch_log)
         if len(call_list) != number_calls:
             logger.error("PDF Table Parsing Error: Call \
                 number mismatch %d != %d", len(call_list), number_calls)
-        write_csv_file(call_list, csv_filename, media_log=media_log)
+        write_csv_file(call_list, csv_filename, dispatch_log=dispatch_log)
     else:
         logger.info("Skipping csv of %s exists at %s", date_str, csv_filename)
+
+    return [pdf_new_filename, csv_filename]
 
 def main():
     ''' Main function '''
@@ -239,7 +255,11 @@ def main():
             meta_data = get_pdf_meta_data(content)
             date = meta_data['pdf_date'].strftime("%Y-%m-%d")
             logger.debug('Found PDF date: %s', date)
-            write_pdf_and_csv(meta_data, content)
+            [_, csvfile] = write_pdf_and_csv(meta_data, content)
+
+            if config.ENABLE_UPLOAD:
+                upload_data(csvfile, 'dispatch')
+
         else:
             logger.error("**** %s file not found on server: %s error ***", day, status_code)
 
@@ -249,7 +269,10 @@ def main():
 
     if status_code == 200:
         meta_data = get_pdf_meta_data(content)
-        write_pdf_and_csv(meta_data, content, media_log=False)
+        [_, csvfile] = write_pdf_and_csv(meta_data, content, dispatch_log=False)
+        
+        if config.ENABLE_UPLOAD:
+            upload_data(csvfile, 'arrest')
     else:
         logger.error("%s file not found", day)
 

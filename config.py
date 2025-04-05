@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 ''' Configuration for logdownloaderv2.py '''
 
 from os import environ
@@ -35,10 +35,21 @@ else:
 if 'ENABLE_DISCORD' in environ:
     ENABLE_DISCORD = environ['ENABLE_DISCORD']
 else:
-    ENABLE_DISCORD = True
+    ENABLE_DISCORD = False
 
+print("test")
 if ENABLE_DISCORD:
     # set DISCORD_PWM_WEBHOOK_URL shell environment var for webhook URL
     DISCORD_WEBHOOK_URL = environ['DISCORD_PWM_WEBHOOK_URL']
     LOGGER_DISCORD_FORMAT = '%(message)s'
     DISCORD_NAME = "Logdl_bot"
+
+if 'ENABLE_UPLOAD' in environ:
+    ENABLE_UPLOAD = environ['ENABLE_UPLOAD']
+else:
+    ENABLE_UPLOAD=False
+
+if ENABLE_UPLOAD:
+    upload_dispatch_url = environ['UPLOAD_DISPATCH_URL']
+    # 'http://ronara.home.lab:8000/add/dispatch/'
+    upload_arrest_url = environ['UPLOAD_ARREST_URL'] #'http://ronara.home.lab:8000/add/arrest/'
