@@ -195,12 +195,13 @@ def write_csv_file(csv_list, csv_file, dispatch_log=True):
         write.writerows(csv_list)
 
 def dir_exist_check(path_str):
-
+    ''' Create Missing Directories '''
+    
     if not exists(path_str):
         makedirs(path_str)
 
 
-def write_pdf_and_csv(meta_data, data, dispatch_log=True):
+def write_pdf_and_csv_upload(meta_data, data, dispatch_log=True):
     ''' Write the PDF file and CVS version of the files to disk '''
 
     # subtract 1 day
@@ -234,6 +235,13 @@ def write_pdf_and_csv(meta_data, data, dispatch_log=True):
             logger.error("PDF Table Parsing Error: Call \
                 number mismatch %d != %d", len(call_list), number_calls)
         write_csv_file(call_list, csv_filename, dispatch_log=dispatch_log)
+
+        if config.ENABLE_UPLOAD:
+            if dispatch_log:
+                upload_data(csv_filename, 'dispatch')
+            else:
+                upload_data(csv_filename, 'arrest')
+
     else:
         logger.info("Skipping csv of %s exists at %s", date_str, csv_filename)
 
@@ -255,10 +263,7 @@ def main():
             meta_data = get_pdf_meta_data(content)
             date = meta_data['pdf_date'].strftime("%Y-%m-%d")
             logger.debug('Found PDF date: %s', date)
-            [_, csvfile] = write_pdf_and_csv(meta_data, content)
-
-            if config.ENABLE_UPLOAD:
-                upload_data(csvfile, 'dispatch')
+            [_, csvfile] = write_pdf_and_csv_upload(meta_data, content)
 
         else:
             logger.error("**** %s file not found on server: %s error ***", day, status_code)
@@ -269,10 +274,7 @@ def main():
 
     if status_code == 200:
         meta_data = get_pdf_meta_data(content)
-        [_, csvfile] = write_pdf_and_csv(meta_data, content, dispatch_log=False)
-        
-        if config.ENABLE_UPLOAD:
-            upload_data(csvfile, 'arrest')
+        [_, csvfile] = write_pdf_and_csv_upload(meta_data, content, dispatch_log=False)
     else:
         logger.error("%s file not found", day)
 
