@@ -270,7 +270,7 @@ def main():
 
     logger.warning("Starting Arrest Log Download")
     status_code, content = download_content(get_log_urls(config.ARREST_LOG_URL, \
-        "View Weekly Arrest Log"))
+        "Weekly Arrest Log"))
 
     if status_code == 200:
         meta_data = get_pdf_meta_data(content)
