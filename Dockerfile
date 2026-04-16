@@ -27,6 +27,8 @@ RUN pip install -r requirments.txt
 RUN chmod +x logdownloaderv2.py
 RUN curl -L https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz | tar -C /usr/local/bin -zxvf -
 
-USER ppd
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 ENV FILE_LOCATION=/output
-ENTRYPOINT [ "/opt/PWM-Police-Log-Downloader/logdownloaderv2.py" ]
+ENTRYPOINT [ "/entrypoint.sh" ]
