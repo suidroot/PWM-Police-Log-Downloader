@@ -21,6 +21,9 @@ def setup_logger():
 
     logger = logging.getLogger()
 
+    if logger.handlers:
+        return logger
+
     if config.ENABLE_DISCORD:
         discord_handler = DiscordHandler(
             config.DISCORD_NAME,

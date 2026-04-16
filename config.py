@@ -46,7 +46,6 @@ ENABLE_UPLOAD = environ.get('ENABLE_UPLOAD', '').lower() in ('1', 'true', 'yes')
 
 if ENABLE_UPLOAD:
     upload_dispatch_url = environ['UPLOAD_DISPATCH_URL']
-    # 'http://ronara.home.lab:8000/add/dispatch/'
-    upload_arrest_url = environ['UPLOAD_ARREST_URL'] #'http://ronara.home.lab:8000/add/arrest/'
+    upload_arrest_url = environ['UPLOAD_ARREST_URL']
 
 HEALTHCHECK_URL = environ.get('HEALTHCHECK_URL', '')

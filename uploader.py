@@ -6,7 +6,7 @@ import json
 import logging
 import urllib.request
 import urllib.parse
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 import argparse
 import glob
 import config
@@ -46,14 +46,9 @@ def split_name(text_name):
     
     except ValueError:
         full_name = text_name.split(' ')
-        if len(full_name) < 3:
-            first = full_name[0]
-            last = full_name[1]
-            middle = ''
-        else:
-            first = full_name[0]
-            last = full_name[1]
-            middle = full_name[2]
+        first = full_name[0] if len(full_name) > 0 else ''
+        last = full_name[1] if len(full_name) > 1 else ''
+        middle = full_name[2] if len(full_name) > 2 else ''
 
     name_dict = {
         'firstname' : first,
@@ -115,9 +110,6 @@ def arrest_upload_loop(parsed_data):
 
 def post_data(url, data):
 
-    if not config.API_KEY:
-        raise RuntimeError("LOG_DB_API_KEY environment variable is not set")
-
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {config.API_KEY}",
@@ -132,6 +124,9 @@ def post_data(url, data):
     except HTTPError as e:
         logging.error("Error: %s, %s %s", e.code, e.reason, data_encoded)
         return None
+    except URLError as e:
+        logging.error("Network error posting to %s: %s", url, e.reason)
+        return None
 
 def wrap_dispatch_upload(filename):
     csv_data = read_csv_file(filename)
@@ -141,12 +136,15 @@ def wrap_arrest_upload(filename):
     csv_data = read_csv_file(filename)
     arrest_upload_loop(csv_data)
 
-def upload_data(filename, type):
+def upload_data(filename, log_type):
 
-    logging.info(f'Loading file {filename}: ')
-    if type == 'dispatch':
+    if not config.API_KEY:
+        raise RuntimeError("LOG_DB_API_KEY environment variable is not set")
+
+    logging.info("Loading file %s", filename)
+    if log_type == 'dispatch':
         wrap_dispatch_upload(filename)
-    elif type == 'arrest':
+    elif log_type == 'arrest':
         wrap_arrest_upload(filename)
     else:
         logging.error("Specify log type")

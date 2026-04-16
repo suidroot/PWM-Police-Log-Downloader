@@ -183,7 +183,7 @@ def write_csv_file(csv_list, csv_file, dispatch_log=True):
     else:
         csv_header = ARREST_CSV_HEADER
 
-    with open(csv_file, 'w') as csv_file_handle:
+    with open(csv_file, 'w', newline='') as csv_file_handle:
         write = csv.writer(csv_file_handle)
         write.writerow(csv_header)
         write.writerows(csv_list)
