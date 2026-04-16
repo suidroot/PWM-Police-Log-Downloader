@@ -302,6 +302,13 @@ def main():
 
     logger.warning("Completed Log Downloads")
 
+    if config.HEALTHCHECK_URL:
+        try:
+            requests.get(config.HEALTHCHECK_URL, verify=False, timeout=10)
+            logger.info("Healthcheck ping sent to %s", config.HEALTHCHECK_URL)
+        except requests.RequestException as e:
+            logger.error("Healthcheck ping failed: %s", e)
+
 if __name__ == '__main__':
     logger = setup_logger()
     main()

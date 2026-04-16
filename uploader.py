@@ -115,8 +115,12 @@ def arrest_upload_loop(parsed_data):
 
 def post_data(url, data):
 
+    if not config.API_KEY:
+        raise RuntimeError("LOG_DB_API_KEY environment variable is not set")
+
     headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {config.API_KEY}",
     }
 
     data_encoded = json.dumps(data).encode("utf-8")
@@ -128,6 +132,7 @@ def post_data(url, data):
     except HTTPError as e:
         logging.error(f"Error: {e.code}, {e.reason} {data_encoded}")
 
+    return result
 
 def wrap_dispatch_upload(filename):
     csv_data = read_csv_file(filename)
