@@ -13,14 +13,14 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get update && \
     apt-get install -y firefox libdbus-glib-1-2 libgtk-3-0t64 libxt6t64
 
-RUN useradd -m -s /bin/bash ppd && \
+RUN useradd -m -s /bin/bash -u 1000 ppd && \
     mkdir -p /opt/PWM-Police-Log-Downloader /output && \
-    chown ppd:ppd /opt/PWM-Police-Log-Downloader /output
+    chown 1000:1000 /opt/PWM-Police-Log-Downloader /output
 
 WORKDIR /opt/PWM-Police-Log-Downloader
-COPY --chown=ppd:ppd * /opt/PWM-Police-Log-Downloader/
+COPY --chown=1000:1000 * /opt/PWM-Police-Log-Downloader/
 
-RUN python3 -m venv /opt/venv && chown -R ppd:ppd /opt/venv
+RUN python3 -m venv /opt/venv && chown -R 1000:1000 /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install -r requirments.txt
 
