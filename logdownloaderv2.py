@@ -75,6 +75,10 @@ def create_firefox_object(headless=True):
     if headless:
         options.add_argument("-headless")
 
+    # Point directly at the real Firefox binary from Mozilla's apt package,
+    # bypassing /usr/bin/firefox which may be Ubuntu's snap stub
+    options.binary_location = "/usr/lib/firefox/firefox"
+
     # Disable sandbox — required in Docker where seccomp restricts sandbox syscalls
     options.set_preference("security.sandbox.content.level", 0)
     options.set_preference("security.sandbox.gpu.level", 0)
