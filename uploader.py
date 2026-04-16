@@ -128,11 +128,10 @@ def post_data(url, data):
 
     try:
         with urllib.request.urlopen(req) as response:
-            result = response.read().decode("utf-8")
+            return response.read().decode("utf-8")
     except HTTPError as e:
-        logging.error(f"Error: {e.code}, {e.reason} {data_encoded}")
-
-    return result
+        logging.error("Error: %s, %s %s", e.code, e.reason, data_encoded)
+        return None
 
 def wrap_dispatch_upload(filename):
     csv_data = read_csv_file(filename)

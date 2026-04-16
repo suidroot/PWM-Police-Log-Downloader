@@ -1,4 +1,12 @@
 #!/bin/bash
+
+IMAGE="suidroot/pwmlogdl"
+
+if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
+    echo "Docker image '$IMAGE' not found — building..."
+    docker build "$(dirname "$0")/.." -t "$IMAGE"
+fi
+
 #-e LOG_LEVEL="DEBUG" \
 docker run --rm \
 -e FILE_LOCATION=/output \

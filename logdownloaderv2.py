@@ -37,36 +37,6 @@ ARREST_CSV_HEADER = [ 'Date', 'Arrestee Name', 'Age', 'Home City', 'Charge', \
     'Arrest Type', 'Officer Name', 'Violation Location' ]
 FILE_LOCATION = config.FILE_LOCATION    # Keeping for readability
 
-# def setup_logger():
-#     '''
-#     Set up logging subsystem
-#     Logging Schema
-#     FATAL: Program should quit sending error
-#     ERROR: Non-fatal error can continue operating
-#     WARNING: Normal Status updates positive activities occurred
-#     INFO: Verbose normal Status updates all activities occurred
-#     DEBUG: Full operation debugging including supported libraries
-#     '''
-
-#     logger = logging.getLogger()
-
-#     if config.ENABLE_DISCORD:
-#         discord_handler = DiscordHandler(
-#             config.DISCORD_NAME,
-#             config.DISCORD_WEBHOOK_URL )
-#         discord_format = logging.Formatter(config.LOGGER_DISCORD_FORMAT)
-#         discord_handler.setFormatter(discord_format)
-#         logger.addHandler(discord_handler)
-
-#     stream_handler = logging.StreamHandler()
-#     stream_format = logging.Formatter(config.LOGGER_STREAM_FORMAT)
-#     stream_handler.setFormatter(stream_format)
-
-#     # Add the handlers to the Logger
-#     logger.addHandler(stream_handler)
-#     logger.setLevel(config.LOGGING_LEVEL)
-
-#     return logger
 
 def create_firefox_object(headless=True):
     ''' Create Firefox Object with option to disable headless mode '''
@@ -159,29 +129,31 @@ def get_pdf_meta_data(data):
     ''' Find the Create time of the PDF file and parse to datetime subtracting 1 day '''
     meta_data = {}
 
-    temp_file_pointer = TemporaryFile()
-    temp_file_pointer.write(data)
-    temp_file_pointer.seek(0)
+    with TemporaryFile() as temp_file_pointer:
+        temp_file_pointer.write(data)
+        temp_file_pointer.seek(0)
 
-    reader = PdfReader(temp_file_pointer)
-    # "D:20220621061003-04'00'"
-    # this removes the TZ data on the end
-    pdf_date = reader.metadata['/CreationDate'].split('-')[0]
-    meta_data['pdf_date'] = datetime.strptime(pdf_date, "D:%Y%m%d%H%M%S") - timedelta(1)
-    temp_file_pointer.close()
+        reader = PdfReader(temp_file_pointer)
+        # "D:20220621061003-04'00'" or "D:20220621061003+00'00'"
+        # strip both positive and negative timezone offsets
+        raw_date = reader.metadata['/CreationDate']
+        pdf_date = raw_date[0:16]  # "D:YYYYmmddHHMMSS" is always first 16 chars
+        meta_data['pdf_date'] = datetime.strptime(pdf_date, "D:%Y%m%d%H%M%S") - timedelta(1)
 
     return meta_data
 
 def pdf_table_extractor(pdf_filename, dispatch_log=True):
     ''' Extract Table data from PDF data '''
 
-    pdf_data = pdfplumber.open(pdf_filename)
     call_list = []
 
-    for pdf_page in pdf_data.pages:
-        calls = pdf_page.extract_table()
-        del calls[0]            # remove page header
-        call_list.extend(calls)
+    with pdfplumber.open(pdf_filename) as pdf_data:
+        for pdf_page in pdf_data.pages:
+            calls = pdf_page.extract_table()
+            if calls is None:
+                continue
+            del calls[0]            # remove page header
+            call_list.extend(calls)
 
     # extract Total calls from PDF if unable to find print error
     if call_list[-1][0] == "Total calls:":
@@ -277,6 +249,9 @@ def main():
     url_data = get_log_urls(config.MEDIA_LOG_URL, DAYS_OF_WEEK)
 
     for day in DAYS_OF_WEEK:
+        if day not in url_data:
+            logger.error("Skipping %s — URL not found on page", day)
+            continue
         logger.info("Start Downloading %s", day)
         logger.debug("Start Downloading %s : %s", day, url_data[day])
         status_code, content = download_content(url_data[day])
