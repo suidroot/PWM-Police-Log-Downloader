@@ -10,7 +10,7 @@ RUN apt-get update && apt-get upgrade -y && \
     curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg | tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null && \
     echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" > /etc/apt/sources.list.d/mozilla.list && \
     apt-get update && \
-    apt-get install -y firefox
+    apt-get install -y firefox libdbus-glib-1-2 libgtk-3-0t64 libxt6t64
 
 RUN mkdir -p /opt/PWM-Police-Log-Downloader /output
 WORKDIR /opt/PWM-Police-Log-Downloader

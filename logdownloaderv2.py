@@ -17,6 +17,7 @@ from PyPDF2 import PdfReader
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.common.exceptions import NoSuchElementException
 import config
 from uploader import upload_data
@@ -70,12 +71,12 @@ FILE_LOCATION = config.FILE_LOCATION    # Keeping for readability
 def create_firefox_object(headless=True):
     ''' Create Firefox Object with option to disable headless mode '''
 
+    options = FirefoxOptions()
     if headless:
-        options = FirefoxOptions()
-        options.add_argument("--headless")
-        driver = webdriver.Firefox(options=options)
-    else:
-        driver = webdriver.Firefox()
+        options.add_argument("-headless")
+
+    service = FirefoxService(executable_path="/usr/local/bin/geckodriver")
+    driver = webdriver.Firefox(service=service, options=options)
 
     return driver
 
