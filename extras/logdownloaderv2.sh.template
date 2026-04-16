@@ -1,0 +1,14 @@
+#!/bin/bash
+#-e LOG_LEVEL="DEBUG" \
+docker run --rm \
+-e FILE_LOCATION=/output \
+-e ENABLE_UPLOAD=True \
+-e UPLOAD_DISPATCH_URL= \
+-e UPLOAD_ARREST_URL= \
+-e ENABLE_DISCORD=True \
+-e DISCORD_PWM_WEBHOOK_URL="" \
+-e API_KEY= \
+-e HEALTHCHECK_URL="" \
+-v "/mnt/ppd-logs":/output \
+--name "PD_Log_DL_Script" \
+suidroot/pwmlogdl
