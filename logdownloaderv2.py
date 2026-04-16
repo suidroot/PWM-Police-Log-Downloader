@@ -75,7 +75,15 @@ def create_firefox_object(headless=True):
     if headless:
         options.add_argument("-headless")
 
-    service = FirefoxService(executable_path="/usr/local/bin/geckodriver")
+    # Disable sandbox — required in Docker where seccomp restricts sandbox syscalls
+    options.set_preference("security.sandbox.content.level", 0)
+    options.set_preference("security.sandbox.gpu.level", 0)
+
+    service = FirefoxService(
+        executable_path="/usr/local/bin/geckodriver",
+        log_output="/tmp/geckodriver.log",
+        service_args=["--log", "debug"]
+    )
     driver = webdriver.Firefox(service=service, options=options)
 
     return driver
