@@ -12,16 +12,20 @@ RUN apt-get update && apt-get upgrade -y && \
     apt-get update && \
     apt-get install -y firefox libdbus-glib-1-2 libgtk-3-0t64 libxt6t64
 
-RUN mkdir -p /opt/PWM-Police-Log-Downloader /output
-WORKDIR /opt/PWM-Police-Log-Downloader
-COPY * /opt/PWM-Police-Log-Downloader/
+RUN useradd -m -s /bin/bash ppd && \
+    mkdir -p /opt/PWM-Police-Log-Downloader /output && \
+    chown ppd:ppd /opt/PWM-Police-Log-Downloader /output
 
-RUN python3 -m venv /opt/venv
+WORKDIR /opt/PWM-Police-Log-Downloader
+COPY --chown=ppd:ppd * /opt/PWM-Police-Log-Downloader/
+
+RUN python3 -m venv /opt/venv && chown -R ppd:ppd /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 RUN pip install -r requirments.txt
 
 RUN chmod +x logdownloaderv2.py
 RUN curl -L https://github.com/mozilla/geckodriver/releases/download/v0.36.0/geckodriver-v0.36.0-linux64.tar.gz | tar -C /usr/local/bin -zxvf -
 
+USER ppd
 ENV FILE_LOCATION=/output
 ENTRYPOINT [ "/opt/PWM-Police-Log-Downloader/logdownloaderv2.py" ]
