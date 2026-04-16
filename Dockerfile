@@ -2,8 +2,15 @@ FROM ubuntu:noble
 
 ENV TZ=UTC
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Firefox from Mozilla's apt repo (Noble's apt firefox is a snap wrapper and doesn't work in Docker)
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y python3 python3-pip python3-venv git curl firefox
+    apt-get install -y python3 python3-pip python3-venv git curl ca-certificates && \
+    install -d -m 0755 /etc/apt/keyrings && \
+    curl -fsSL https://packages.mozilla.org/apt/repo-signing-key.gpg | tee /etc/apt/keyrings/packages.mozilla.org.asc > /dev/null && \
+    echo "deb [signed-by=/etc/apt/keyrings/packages.mozilla.org.asc] https://packages.mozilla.org/apt mozilla main" > /etc/apt/sources.list.d/mozilla.list && \
+    apt-get update && \
+    apt-get install -y firefox
 
 RUN mkdir -p /opt/PWM-Police-Log-Downloader /output
 WORKDIR /opt/PWM-Police-Log-Downloader
