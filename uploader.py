@@ -153,16 +153,20 @@ def main(args):
         files = glob.glob(f"{args.directory}/*.csv")
     elif args.filename:
         files = [args.filename]
+    else:
+        print("Specify a filename (-f) or directory (-d)")
+        return
 
     if args.media:
-        type = 'dispatch'
+        log_type = 'dispatch'
     elif args.arrest:
-        type = 'arrest'
+        log_type = 'arrest'
     else:
         print("Specify log type -m or -a")
+        return
 
     for file in files:
-        upload_data(file, type)
+        upload_data(file, log_type)
 
 
 if __name__ == '__main__':

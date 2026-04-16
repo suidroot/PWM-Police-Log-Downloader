@@ -32,22 +32,15 @@ else:
     LOGGING_LEVEL = logging.WARNING
 
 # Discord Logging
-if 'ENABLE_DISCORD' in environ:
-    ENABLE_DISCORD = environ['ENABLE_DISCORD']
-else:
-    ENABLE_DISCORD = False
+ENABLE_DISCORD = environ.get('ENABLE_DISCORD', '').lower() in ('1', 'true', 'yes')
 
-print("test")
 if ENABLE_DISCORD:
     # set DISCORD_PWM_WEBHOOK_URL shell environment var for webhook URL
     DISCORD_WEBHOOK_URL = environ['DISCORD_PWM_WEBHOOK_URL']
     LOGGER_DISCORD_FORMAT = '%(message)s'
     DISCORD_NAME = "Logdl_bot"
 
-if 'ENABLE_UPLOAD' in environ:
-    ENABLE_UPLOAD = environ['ENABLE_UPLOAD']
-else:
-    ENABLE_UPLOAD=False
+ENABLE_UPLOAD = environ.get('ENABLE_UPLOAD', '').lower() in ('1', 'true', 'yes')
 
 if ENABLE_UPLOAD:
     upload_dispatch_url = environ['UPLOAD_DISPATCH_URL']

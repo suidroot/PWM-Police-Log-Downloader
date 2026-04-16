@@ -100,7 +100,7 @@ def get_log_urls(url, link_text, headless=True):
         try:
             link_element = driver.find_element(By.LINK_TEXT, link_text)
         except NoSuchElementException as except_data:
-            logging.fatal(" %s ", except_data)
+            logger.fatal(" %s ", except_data)
             driver.quit()
             exit()
 
@@ -114,10 +114,9 @@ def get_log_urls(url, link_text, headless=True):
                 link_element = driver.find_element(By.LINK_TEXT, day)
                 day_url = link_element.get_attribute('href')
                 url_data[day] = day_url
+                logger.debug("%s: %s", day, day_url)
             except NoSuchElementException as except_data:
                 logger.error(" %s ", except_data)
-
-            logger.debug("%s: %s", day, day_url)
     else:
         logger.fatal("Invalid link_text data not str or list")
         driver.quit()
@@ -144,7 +143,7 @@ def get_pdf_meta_data(data):
     reader = PdfReader(temp_file_pointer)
     # "D:20220621061003-04'00'"
     # this removes the TZ data on the end
-    pdf_date = reader.getDocumentInfo()['/CreationDate'].split('-')[0]
+    pdf_date = reader.metadata['/CreationDate'].split('-')[0]
     meta_data['pdf_date'] = datetime.strptime(pdf_date, "D:%Y%m%d%H%M%S") - timedelta(1)
     temp_file_pointer.close()
 
@@ -276,7 +275,7 @@ def main():
         meta_data = get_pdf_meta_data(content)
         [_, csvfile] = write_pdf_and_csv_upload(meta_data, content, dispatch_log=False)
     else:
-        logger.error("%s file not found", day)
+        logger.error("Arrest log file not found on server: %s error", status_code)
 
     logger.warning("Completed Log Downloads")
 
