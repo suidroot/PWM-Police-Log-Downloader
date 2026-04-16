@@ -79,12 +79,22 @@ def create_firefox_object(headless=True):
     options.set_preference("security.sandbox.content.level", 0)
     options.set_preference("security.sandbox.gpu.level", 0)
 
+    geckodriver_log = "/tmp/geckodriver.log"
     service = FirefoxService(
         executable_path="/usr/local/bin/geckodriver",
-        log_output="/tmp/geckodriver.log",
+        log_output=geckodriver_log,
         service_args=["--log", "debug"]
     )
-    driver = webdriver.Firefox(service=service, options=options)
+
+    try:
+        driver = webdriver.Firefox(service=service, options=options)
+    except Exception as e:
+        try:
+            with open(geckodriver_log) as f:
+                logging.error("geckodriver log:\n%s", f.read())
+        except OSError:
+            pass
+        raise
 
     return driver
 
