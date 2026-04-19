@@ -15,8 +15,8 @@ docker run --rm \
 -e UPLOAD_ARREST_URL= \
 -e ENABLE_DISCORD=True \
 -e DISCORD_PWM_WEBHOOK_URL="" \
--e API_KEY= \
+-e LOG_DB_API_KEY= \
 -e HEALTHCHECK_URL="" \
--v "/mnt/ppd-logs":/output \
+-v "./test_data":/output \
 --name "PD_Log_DL_Script" \
 suidroot/pwmlogdl
