@@ -1,10 +1,10 @@
 #!/bin/bash
 
-IMAGE="suidroot/pwmlogdl"
+DOCKER_IMAGE=""
 
-if ! docker image inspect "$IMAGE" > /dev/null 2>&1; then
-    echo "Docker image '$IMAGE' not found — building..."
-    docker build "$(dirname "$0")/.." -t "$IMAGE"
+if ! docker image inspect "$DOCKER_IMAGE" > /dev/null 2>&1; then
+    echo "Docker image '$DOCKER_IMAGE' not found — building..."
+    docker build "$(dirname "$0")/.." -t "$DOCKER_IMAGE"
 fi
 
 #-e LOG_LEVEL="DEBUG" \
@@ -19,4 +19,4 @@ docker run --rm \
 -e HEALTHCHECK_URL="" \
 -v "/mnt/ppd-logs":/output \
 --name "PD_Log_DL_Script" \
-suidroot/pwmlogdl
+$DOCKER_IMAGE
