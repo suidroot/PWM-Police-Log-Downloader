@@ -7,6 +7,8 @@ import logging
 MEDIA_LOG_URL = "https://www.portlandmaine.gov/472/Daily-Media-Logs"
 ARREST_LOG_URL = "https://www.portlandmaine.gov/471/Crime-in-Portland"
 
+API_KEY = environ.get('LOG_DB_API_KEY', '')
+
 if 'FILE_LOCATION' in environ:
     FILE_LOCATION =  environ['FILE_LOCATION']
 else:
@@ -44,5 +46,6 @@ ENABLE_UPLOAD = environ.get('ENABLE_UPLOAD', '').lower() in ('1', 'true', 'yes')
 
 if ENABLE_UPLOAD:
     upload_dispatch_url = environ['UPLOAD_DISPATCH_URL']
-    # 'http://ronara.home.lab:8000/add/dispatch/'
-    upload_arrest_url = environ['UPLOAD_ARREST_URL'] #'http://ronara.home.lab:8000/add/arrest/'
+    upload_arrest_url = environ['UPLOAD_ARREST_URL']
+
+HEALTHCHECK_URL = environ.get('HEALTHCHECK_URL', '')

@@ -130,3 +130,5 @@ dmypy.json
 .DS_Store
 csv_loader/test.db
 test
+extras/logdownloaderv2.sh
+extras/test_data

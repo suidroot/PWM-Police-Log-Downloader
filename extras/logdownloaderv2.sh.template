@@ -1,0 +1,22 @@
+#!/bin/bash
+
+DOCKER_IMAGE=""
+
+if ! docker image inspect "$DOCKER_IMAGE" > /dev/null 2>&1; then
+    echo "Docker image '$DOCKER_IMAGE' not found — building..."
+    docker build "$(dirname "$0")/.." -t "$DOCKER_IMAGE"
+fi
+
+#-e LOG_LEVEL="DEBUG" \
+docker run --rm \
+-e FILE_LOCATION=/output \
+-e ENABLE_UPLOAD=True \
+-e UPLOAD_DISPATCH_URL= \
+-e UPLOAD_ARREST_URL= \
+-e ENABLE_DISCORD=True \
+-e DISCORD_PWM_WEBHOOK_URL="" \
+-e LOG_DB_API_KEY= \
+-e HEALTHCHECK_URL="" \
+-v "./test_data":/output \
+--name "PD_Log_DL_Script" \
+$DOCKER_IMAGE
