@@ -11,6 +11,7 @@ from time import sleep
 from datetime import datetime, timedelta
 import logging
 import csv
+import re
 import requests
 import pdfplumber
 from PyPDF2 import PdfReader
@@ -142,6 +143,37 @@ def get_pdf_meta_data(data):
 
     return meta_data
 
+def get_pdf_date_from_text_media(data) -> datetime:
+    ''' Find the Date from the PDF text and parse to datetime '''
+
+    with TemporaryFile() as temp_file_pointer:
+        temp_file_pointer.write(data)
+        temp_file_pointer.seek(0)
+
+        reader = PdfReader(temp_file_pointer)
+
+        if len(reader.pages) < 2:
+            logger.error("get_pdf_date_from_text: PDF has fewer than 2 pages")
+            return None
+
+        raw_text = reader.pages[1].extract_text()
+        if not raw_text:
+            logger.error("get_pdf_date_from_text: no text extracted from page 2")
+            return None
+
+        pdf_text = raw_text.replace("\n", " ")
+        # Calls for Service Saturday, April 25, 2026
+        match = re.search(r"Calls for Service  (\w+, \w+ \d{,2}, \d{4}) ", pdf_text)
+        if not match:
+            logger.error("get_pdf_date_from_text: date pattern not found in: %s", pdf_text[:200])
+            return None
+
+        try:
+            return datetime.strptime(match.group(1), "%A, %B %d, %Y")
+        except ValueError as e:
+            logger.error("get_pdf_date_from_text: failed to parse date %r: %s", match.group(1), e)
+            return None
+
 def pdf_table_extractor(pdf_filename, dispatch_log=True):
     ''' Extract Table data from PDF data '''
 
@@ -195,12 +227,12 @@ def dir_exist_check(path_str):
         makedirs(path_str)
 
 
-def write_pdf_and_csv_upload(meta_data, data, dispatch_log=True):
+def write_pdf_and_csv_upload(pdf_date, data, dispatch_log=True):
     ''' Write the PDF file and CVS version of the files to disk '''
 
     # subtract 1 day
-    date_str =  meta_data['pdf_date'].strftime("%Y-%m-%d")
-    year_str =  meta_data['pdf_date'].strftime("%Y")
+    date_str =  pdf_date.strftime("%Y-%m-%d")
+    year_str =  pdf_date.strftime("%Y")
 
     if dispatch_log:
         dir_exist_check(f"{FILE_LOCATION}/Media Logs/{year_str}")
@@ -257,9 +289,11 @@ def main():
         status_code, content = download_content(url_data[day])
 
         if status_code == 200:
-            meta_data = get_pdf_meta_data(content)
-            date = meta_data['pdf_date'].strftime("%Y-%m-%d")
-            logger.debug('Found PDF date: %s', date)
+            # meta_data = get_pdf_meta_data(content)
+            # date = meta_data['pdf_date'].strftime("%Y-%m-%d")
+            meta_data = get_pdf_date_from_text_media(content)
+            pdf_date = meta_data.strftime("%Y-%m-%d")
+            logger.debug('Found PDF date: %s', pdf_date)
             [_, csvfile] = write_pdf_and_csv_upload(meta_data, content)
 
         else:
@@ -271,7 +305,7 @@ def main():
 
     if status_code == 200:
         meta_data = get_pdf_meta_data(content)
-        [_, csvfile] = write_pdf_and_csv_upload(meta_data, content, dispatch_log=False)
+        [_, csvfile] = write_pdf_and_csv_upload(meta_data['pdf_date'], content, dispatch_log=False)
     else:
         logger.error("Arrest log file not found on server: %s error", status_code)
 
